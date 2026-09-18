@@ -18,6 +18,7 @@ const selectedTipo = ref('javascript')
 const selectedAssetId = ref(null)
 const modo = ref('detalhe') // 'detalhe' | 'form'
 const assetEmEdicao = ref(null)
+const assetFormRef = ref(null)
 
 onMounted(fetchAssets)
 
@@ -36,23 +37,34 @@ const categoriasExistentes = computed(() => {
   return Array.from(set).sort()
 })
 
+const colunasGrid = computed(() => (modo.value === 'form' ? '220px 1fr' : '220px 320px 1fr'))
+
+function podeSairDoForm() {
+  if (modo.value !== 'form') return true
+  return assetFormRef.value?.confirmarDescarteSeNecessario() ?? true
+}
+
 function selecionarTipo(tipo) {
+  if (!podeSairDoForm()) return
   selectedTipo.value = tipo
   selectedAssetId.value = null
   modo.value = 'detalhe'
 }
 
 function selecionarAsset(id) {
+  if (!podeSairDoForm()) return
   selectedAssetId.value = id
   modo.value = 'detalhe'
 }
 
 function iniciarNovoAsset() {
+  if (!podeSairDoForm()) return
   assetEmEdicao.value = null
   modo.value = 'form'
 }
 
 function iniciarEdicao(asset) {
+  if (!podeSairDoForm()) return
   assetEmEdicao.value = asset
   modo.value = 'form'
 }
@@ -87,6 +99,7 @@ function cancelarForm() {
     />
 
     <AssetList
+      v-if="modo !== 'form'"
       :assets="assetsDoTipo"
       :selected-id="selectedAssetId"
       @select="selecionarAsset"
@@ -100,6 +113,7 @@ function cancelarForm() {
       <div class="conteudo">
         <AssetForm
           v-if="modo === 'form'"
+          ref="assetFormRef"
           :asset="assetEmEdicao"
           :categorias-existentes="categoriasExistentes"
           :novo-id="generateId"
@@ -115,7 +129,7 @@ function cancelarForm() {
 <style scoped>
 .layout {
   display: grid;
-  grid-template-columns: 220px 320px 1fr;
+  grid-template-columns: v-bind(colunasGrid);
   height: 100vh;
 }
 
