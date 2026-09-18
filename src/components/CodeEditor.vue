@@ -104,6 +104,14 @@ function onKeydown(event) {
   pointer-events: none;
 }
 
+/* Garante que o <code> herde exatamente a mesma fonte do <pre>/<textarea>,
+   em vez da regra global (com outra lista de fallback) que o navegador
+   aplicaria diretamente ao elemento <code> — pequenas diferenças de fonte
+   entre o <code> e o <textarea> desalinham a seleção/cursor. */
+.code-editor-highlight :deep(code) {
+  font: inherit;
+}
+
 .code-editor-input {
   resize: none;
   border: none;

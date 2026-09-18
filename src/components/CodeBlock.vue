@@ -34,6 +34,10 @@ const highlighted = computed(() => {
   line-height: 1.6;
 }
 
+.code-block :deep(code) {
+  font: inherit;
+}
+
 .code-block :deep(.token.comment) {
   color: #7d8492;
   font-style: italic;
