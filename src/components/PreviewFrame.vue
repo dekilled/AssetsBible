@@ -3,7 +3,6 @@ import { ref, watchEffect } from 'vue'
 
 const props = defineProps({
   tipo: { type: String, required: true },
-  previewHtml: { type: String, default: '' },
   codigo: { type: String, default: '' },
 })
 
@@ -21,13 +20,12 @@ function carregarVueGlobal() {
 
 watchEffect(async () => {
   const tipo = props.tipo
-  const previewHtml = props.previewHtml
   const codigo = props.codigo
 
   if (tipo === 'javascript' || tipo === 'html') {
-    srcdoc.value = previewHtml.trim()
-      ? baseDoc(previewHtml)
-      : baseDoc('<p style="font-family:sans-serif;color:#888;">Sem preview HTML definido para este asset.</p>')
+    srcdoc.value = codigo.trim()
+      ? baseDoc(codigo)
+      : baseDoc('<p style="font-family:sans-serif;color:#888;">Sem código definido para este asset.</p>')
     return
   }
 

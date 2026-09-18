@@ -9,8 +9,7 @@
       "performance",
       "eventos"
     ],
-    "codigo": "function debounce(fn, delay) {\n  let timer;\n  return (...args) => {\n    clearTimeout(timer);\n    timer = setTimeout(() => fn(...args), delay);\n  };\n}\n\n// uso:\nconst log = debounce((msg) => console.log(msg), 300);",
-    "previewHtml": "<input id=\"i\" placeholder=\"Digite algo...\" style=\"font-family:sans-serif;padding:8px;width:100%;box-sizing:border-box;\" />\n<p id=\"out\" style=\"font-family:sans-serif;color:#555;\"></p>\n<script>\n  function debounce(fn, delay) {\n    let timer;\n    return (...args) => {\n      clearTimeout(timer);\n      timer = setTimeout(() => fn(...args), delay);\n    };\n  }\n  const out = document.getElementById('out');\n  const onType = debounce((v) => { out.textContent = 'Debounced: ' + v; }, 400);\n  document.getElementById('i').addEventListener('input', (e) => onType(e.target.value));\n</script>",
+    "codigo": "<input id=\"i\" placeholder=\"Digite algo...\" style=\"font-family:sans-serif;padding:8px;width:100%;box-sizing:border-box;\" />\n<p id=\"out\" style=\"font-family:sans-serif;color:#555;\"></p>\n<script>\n  function debounce(fn, delay) {\n    let timer;\n    return (...args) => {\n      clearTimeout(timer);\n      timer = setTimeout(() => fn(...args), delay);\n    };\n  }\n  const out = document.getElementById('out');\n  const onType = debounce((v) => { out.textContent = 'Debounced: ' + v; }, 400);\n  document.getElementById('i').addEventListener('input', (e) => onType(e.target.value));\n</script>",
     "variacoes": [
       {
         "nome": "Com cancelamento",
@@ -28,8 +27,7 @@
       "performance",
       "eventos"
     ],
-    "codigo": "function throttle(fn, limit) {\n  let inThrottle = false;\n  return (...args) => {\n    if (!inThrottle) {\n      fn(...args);\n      inThrottle = true;\n      setTimeout(() => (inThrottle = false), limit);\n    }\n  };\n}",
-    "previewHtml": "<button id=\"b\" style=\"font-family:sans-serif;padding:8px 16px;\">Clique rápido várias vezes</button>\n<p id=\"out\" style=\"font-family:sans-serif;color:#555;\">Cliques processados: 0</p>\n<script>\n  function throttle(fn, limit) {\n    let inThrottle = false;\n    return (...args) => {\n      if (!inThrottle) {\n        fn(...args);\n        inThrottle = true;\n        setTimeout(() => (inThrottle = false), limit);\n      }\n    };\n  }\n  let count = 0;\n  const out = document.getElementById('out');\n  const onClick = throttle(() => { count++; out.textContent = 'Cliques processados: ' + count; }, 1000);\n  document.getElementById('b').addEventListener('click', onClick);\n</script>",
+    "codigo": "<button id=\"b\" style=\"font-family:sans-serif;padding:8px 16px;\">Clique rápido várias vezes</button>\n<p id=\"out\" style=\"font-family:sans-serif;color:#555;\">Cliques processados: 0</p>\n<script>\n  function throttle(fn, limit) {\n    let inThrottle = false;\n    return (...args) => {\n      if (!inThrottle) {\n        fn(...args);\n        inThrottle = true;\n        setTimeout(() => (inThrottle = false), limit);\n      }\n    };\n  }\n  let count = 0;\n  const out = document.getElementById('out');\n  const onClick = throttle(() => { count++; out.textContent = 'Cliques processados: ' + count; }, 1000);\n  document.getElementById('b').addEventListener('click', onClick);\n</script>",
     "variacoes": []
   },
   {
@@ -42,8 +40,7 @@
       "objetos",
       "clone"
     ],
-    "codigo": "function deepClone(value) {\n  if (typeof structuredClone === 'function') {\n    return structuredClone(value);\n  }\n  return JSON.parse(JSON.stringify(value));\n}",
-    "previewHtml": "<pre id=\"out\" style=\"font-family:monospace;background:#f4f4f4;padding:12px;\"></pre>\n<script>\n  function deepClone(value) {\n    if (typeof structuredClone === 'function') return structuredClone(value);\n    return JSON.parse(JSON.stringify(value));\n  }\n  const original = { a: 1, nested: { b: 2 } };\n  const cloned = deepClone(original);\n  cloned.nested.b = 999;\n  document.getElementById('out').textContent =\n    'original: ' + JSON.stringify(original) + '\\ncloned:   ' + JSON.stringify(cloned);\n</script>",
+    "codigo": "<pre id=\"out\" style=\"font-family:monospace;background:#f4f4f4;padding:12px;\"></pre>\n<script>\n  function deepClone(value) {\n    if (typeof structuredClone === 'function') return structuredClone(value);\n    return JSON.parse(JSON.stringify(value));\n  }\n  const original = { a: 1, nested: { b: 2 } };\n  const cloned = deepClone(original);\n  cloned.nested.b = 999;\n  document.getElementById('out').textContent =\n    'original: ' + JSON.stringify(original) + '\\ncloned:   ' + JSON.stringify(cloned);\n</script>",
     "variacoes": []
   },
   {
@@ -56,8 +53,7 @@
       "dom",
       "helpers"
     ],
-    "codigo": "const $ = (sel, ctx = document) => ctx.querySelector(sel);\nconst $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));",
-    "previewHtml": "<div class=\"item\">Item 1</div>\n<div class=\"item\">Item 2</div>\n<div class=\"item\">Item 3</div>\n<p id=\"out\" style=\"font-family:sans-serif;\"></p>\n<script>\n  const $ = (sel, ctx = document) => ctx.querySelector(sel);\n  const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));\n  document.getElementById('out').textContent = 'Encontrados: ' + $$('.item').length + ' itens';\n</script>",
+    "codigo": "<div class=\"item\">Item 1</div>\n<div class=\"item\">Item 2</div>\n<div class=\"item\">Item 3</div>\n<p id=\"out\" style=\"font-family:sans-serif;\"></p>\n<script>\n  const $ = (sel, ctx = document) => ctx.querySelector(sel);\n  const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));\n  document.getElementById('out').textContent = 'Encontrados: ' + $$('.item').length + ' itens';\n</script>",
     "variacoes": []
   },
   {
@@ -70,8 +66,7 @@
       "validação",
       "regex"
     ],
-    "codigo": "function isValidEmail(email) {\n  return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);\n}",
-    "previewHtml": "<input id=\"i\" placeholder=\"seu@email.com\" style=\"font-family:sans-serif;padding:8px;width:100%;box-sizing:border-box;\" />\n<p id=\"out\" style=\"font-family:sans-serif;\"></p>\n<script>\n  function isValidEmail(email) {\n    return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);\n  }\n  document.getElementById('i').addEventListener('input', (e) => {\n    document.getElementById('out').textContent = isValidEmail(e.target.value) ? 'Válido ✅' : 'Inválido ❌';\n  });\n</script>",
+    "codigo": "<input id=\"i\" placeholder=\"seu@email.com\" style=\"font-family:sans-serif;padding:8px;width:100%;box-sizing:border-box;\" />\n<p id=\"out\" style=\"font-family:sans-serif;\"></p>\n<script>\n  function isValidEmail(email) {\n    return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);\n  }\n  document.getElementById('i').addEventListener('input', (e) => {\n    document.getElementById('out').textContent = isValidEmail(e.target.value) ? 'Válido ✅' : 'Inválido ❌';\n  });\n</script>",
     "variacoes": []
   },
   {
@@ -85,7 +80,6 @@
       "reatividade"
     ],
     "codigo": "export default {\n  data() {\n    return { count: 0 };\n  },\n  template: `\n    <div style=\"font-family:sans-serif;\">\n      <p>Contador: {{ count }}</p>\n      <button @click=\"count--\">-</button>\n      <button @click=\"count++\">+</button>\n    </div>\n  `\n};",
-    "previewHtml": "",
     "variacoes": []
   },
   {
@@ -100,7 +94,6 @@
       "card"
     ],
     "codigo": "<div class=\"card\">\n  <h3>Título do Card</h3>\n  <p>Alguma descrição breve aqui.</p>\n</div>\n\n<style>\n.card {\n  font-family: sans-serif;\n  border: 1px solid #e2e2e2;\n  border-radius: 8px;\n  padding: 16px;\n  max-width: 280px;\n  transition: transform 0.2s ease, box-shadow 0.2s ease;\n}\n.card:hover {\n  transform: translateY(-4px);\n  box-shadow: 0 8px 20px rgba(0,0,0,0.12);\n}\n</style>",
-    "previewHtml": "<div class=\"card\">\n  <h3>Título do Card</h3>\n  <p>Alguma descrição breve aqui.</p>\n</div>\n<style>\n.card {\n  font-family: sans-serif;\n  border: 1px solid #e2e2e2;\n  border-radius: 8px;\n  padding: 16px;\n  max-width: 280px;\n  transition: transform 0.2s ease, box-shadow 0.2s ease;\n}\n.card:hover {\n  transform: translateY(-4px);\n  box-shadow: 0 8px 20px rgba(0,0,0,0.12);\n}\n</style>",
     "variacoes": []
   }
 ]

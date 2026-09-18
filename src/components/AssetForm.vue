@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, computed, ref, watch } from 'vue'
 import PreviewFrame from './PreviewFrame.vue'
+import CodeEditor from './CodeEditor.vue'
 
 const props = defineProps({
   asset: { type: Object, default: null },
@@ -25,7 +26,6 @@ function criarFormularioVazio() {
     descricao: '',
     tags: '',
     codigo: '',
-    previewHtml: '',
     variacoes: [],
   }
 }
@@ -59,6 +59,10 @@ defineExpose({ confirmarDescarteSeNecessario })
 
 const listaDataId = 'categorias-existentes'
 
+// HTML/JS/CSS ficam num único editor (linguagem 'markup' faz o Prism destacar
+// <script>/<style> embutidos); componentes Vue usam highlight de 'javascript' puro.
+const linguagemEditor = computed(() => (form.tipo === 'vue' ? 'javascript' : 'markup'))
+
 function adicionarVariacao() {
   form.variacoes.push({ nome: '', codigo: '' })
 }
@@ -66,12 +70,6 @@ function adicionarVariacao() {
 function removerVariacao(index) {
   form.variacoes.splice(index, 1)
 }
-
-const assetPreview = computed(() => ({
-  tipo: form.tipo,
-  previewHtml: form.previewHtml,
-  codigo: form.codigo,
-}))
 
 function tentarCancelar() {
   if (confirmarDescarteSeNecessario()) emit('cancelar')
@@ -90,7 +88,6 @@ function salvar() {
       .map((t) => t.trim())
       .filter(Boolean),
     codigo: form.codigo,
-    previewHtml: form.previewHtml,
     variacoes: form.variacoes.filter((v) => v.nome.trim() || v.codigo.trim()),
   })
 }
@@ -147,32 +144,27 @@ function salvar() {
 
       <div v-show="abaAtiva === 'codigo'" class="aba-codigo" :class="{ expandido: editorExpandido }">
         <div class="painel-editor">
-          <label class="campo">
-            Código
-            <textarea v-model="form.codigo" rows="14" class="mono" placeholder="Cole ou escreva o código aqui"></textarea>
-          </label>
+          <CodeEditor
+            v-model="form.codigo"
+            :language="linguagemEditor"
+            placeholder="HTML, CSS e JS juntos aqui (tudo o que o preview precisa pra rodar)"
+          />
 
-          <label class="campo">
-            Preview HTML (opcional, usado no iframe para JS/HTML)
-            <textarea v-model="form.previewHtml" rows="8" class="mono" placeholder="HTML/CSS/JS para renderizar o preview"></textarea>
-          </label>
-
-          <div class="campo">
-            <div class="variacoes-cabecalho">
-              <span>Variações</span>
-              <button type="button" @click="adicionarVariacao">+ Adicionar variação</button>
+          <details class="variacoes">
+            <summary>Variações ({{ form.variacoes.length }})</summary>
+            <div class="variacoes-corpo">
+              <button type="button" class="botao-adicionar-variacao" @click="adicionarVariacao">+ Adicionar variação</button>
+              <div v-for="(v, i) in form.variacoes" :key="i" class="variacao">
+                <input v-model="v.nome" type="text" placeholder="Nome da variação" />
+                <textarea v-model="v.codigo" rows="4" class="mono" placeholder="Código da variação"></textarea>
+                <button type="button" class="remover" @click="removerVariacao(i)">Remover</button>
+              </div>
             </div>
-            <div v-for="(v, i) in form.variacoes" :key="i" class="variacao">
-              <input v-model="v.nome" type="text" placeholder="Nome da variação" />
-              <textarea v-model="v.codigo" rows="4" class="mono" placeholder="Código da variação"></textarea>
-              <button type="button" class="remover" @click="removerVariacao(i)">Remover</button>
-            </div>
-          </div>
+          </details>
         </div>
 
         <div v-if="!editorExpandido" class="painel-preview">
-          <h4>Preview ao vivo</h4>
-          <PreviewFrame :tipo="assetPreview.tipo" :preview-html="assetPreview.previewHtml" :codigo="assetPreview.codigo" />
+          <PreviewFrame :tipo="form.tipo" :codigo="form.codigo" />
         </div>
       </div>
     </div>
@@ -227,11 +219,16 @@ function salvar() {
 
 .corpo {
   flex: 1;
-  overflow-y: auto;
-  padding: 16px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .aba-sobre {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
@@ -265,19 +262,56 @@ textarea.mono {
   font-size: 13px;
 }
 
-.variacoes-cabecalho {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
+.aba-codigo {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
-.variacoes-cabecalho button {
+.aba-codigo.expandido {
+  grid-template-columns: 1fr;
+}
+
+.painel-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.variacoes {
+  flex-shrink: 0;
+  border: 1px solid #e2e4e9;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.variacoes summary {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+  user-select: none;
+}
+
+.variacoes-corpo {
+  padding: 0 12px 12px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.botao-adicionar-variacao {
   border: 1px dashed #b7bcc7;
   background: transparent;
   border-radius: 6px;
   padding: 4px 10px;
   font-size: 12px;
+  margin-bottom: 10px;
 }
 
 .variacao {
@@ -299,40 +333,17 @@ textarea.mono {
   padding: 0;
 }
 
-.aba-codigo {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  height: 100%;
-}
-
-.aba-codigo.expandido {
-  grid-template-columns: 1fr;
-}
-
-.painel-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-}
-
 .painel-preview {
   display: flex;
   flex-direction: column;
   gap: 8px;
   min-width: 0;
-}
-
-.painel-preview h4 {
-  margin: 0;
-  font-size: 13px;
-  color: #666;
+  min-height: 0;
 }
 
 .painel-preview :deep(.preview-frame) {
   flex: 1;
-  min-height: 400px;
+  min-height: 0;
 }
 
 .rodape {

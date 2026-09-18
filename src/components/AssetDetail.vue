@@ -1,6 +1,7 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import PreviewFrame from './PreviewFrame.vue'
+import CodeBlock from './CodeBlock.vue'
 
 const props = defineProps({
   asset: { type: Object, default: null },
@@ -16,6 +17,8 @@ watch(
     abaAtiva.value = 'sobre'
   }
 )
+
+const linguagem = computed(() => (props.asset?.tipo === 'vue' ? 'javascript' : 'markup'))
 </script>
 
 <template>
@@ -38,7 +41,7 @@ watch(
       </nav>
 
       <div class="conteudo-aba">
-        <div v-if="abaAtiva === 'sobre'" class="aba-sobre">
+        <div v-show="abaAtiva === 'sobre'" class="aba-sobre">
           <p><strong>Categoria:</strong> {{ asset.categoria }}</p>
           <p>{{ asset.descricao }}</p>
           <div class="tags">
@@ -49,17 +52,17 @@ watch(
             <h4>Variações</h4>
             <details v-for="(v, i) in asset.variacoes" :key="i">
               <summary>{{ v.nome }}</summary>
-              <pre class="codigo">{{ v.codigo }}</pre>
+              <CodeBlock :codigo="v.codigo" :language="linguagem" />
             </details>
           </div>
         </div>
 
-        <div v-else-if="abaAtiva === 'codigo'" class="aba-codigo">
-          <pre class="codigo"><code>{{ asset.codigo }}</code></pre>
+        <div v-show="abaAtiva === 'codigo'" class="aba-codigo">
+          <CodeBlock :codigo="asset.codigo" :language="linguagem" />
         </div>
 
-        <div v-else class="aba-preview">
-          <PreviewFrame :tipo="asset.tipo" :preview-html="asset.previewHtml" :codigo="asset.codigo" />
+        <div v-show="abaAtiva === 'preview'" class="aba-preview">
+          <PreviewFrame :tipo="asset.tipo" :codigo="asset.codigo" />
         </div>
       </div>
     </template>
@@ -69,9 +72,11 @@ watch(
 <style scoped>
 .detalhe {
   height: 100%;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   padding: 16px;
   background: #fbfbfc;
+  box-sizing: border-box;
 }
 
 .vazio {
@@ -83,6 +88,7 @@ watch(
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .cabecalho h2 {
@@ -113,6 +119,7 @@ watch(
   gap: 4px;
   border-bottom: 1px solid #e2e4e9;
   margin-bottom: 16px;
+  flex-shrink: 0;
 }
 
 .abas button {
@@ -130,6 +137,13 @@ watch(
   font-weight: 600;
 }
 
+.conteudo-aba {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 .tags {
   display: flex;
   gap: 6px;
@@ -145,23 +159,42 @@ watch(
   border-radius: 999px;
 }
 
+.aba-sobre {
+  overflow-y: auto;
+}
+
 .variacoes {
   margin-top: 16px;
 }
 
-.codigo {
-  background: #1f2430;
-  color: #e6e8ec;
-  padding: 12px;
-  border-radius: 6px;
-  overflow-x: auto;
+.variacoes details {
+  margin-bottom: 10px;
+}
+
+.variacoes summary {
+  cursor: pointer;
   font-size: 13px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-break: break-word;
+  color: #444;
+  margin-bottom: 6px;
+}
+
+.aba-codigo {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.aba-codigo :deep(.code-block) {
+  flex: 1;
 }
 
 .aba-preview {
-  height: 400px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.aba-preview :deep(.preview-frame) {
+  flex: 1;
 }
 </style>
