@@ -1,0 +1,167 @@
+<script setup>
+import { ref, watch } from 'vue'
+import PreviewFrame from './PreviewFrame.vue'
+
+const props = defineProps({
+  asset: { type: Object, default: null },
+})
+
+const emit = defineEmits(['editar', 'excluir'])
+
+const abaAtiva = ref('sobre')
+
+watch(
+  () => props.asset?.id,
+  () => {
+    abaAtiva.value = 'sobre'
+  }
+)
+</script>
+
+<template>
+  <section class="detalhe">
+    <p v-if="!asset" class="vazio">Selecione um asset na lista ao lado para ver os detalhes.</p>
+
+    <template v-else>
+      <header class="cabecalho">
+        <h2>{{ asset.nome }}</h2>
+        <div class="acoes">
+          <button @click="emit('editar', asset)">Editar</button>
+          <button class="perigo" @click="emit('excluir', asset)">Excluir</button>
+        </div>
+      </header>
+
+      <nav class="abas">
+        <button :class="{ ativa: abaAtiva === 'sobre' }" @click="abaAtiva = 'sobre'">Sobre</button>
+        <button :class="{ ativa: abaAtiva === 'codigo' }" @click="abaAtiva = 'codigo'">Código</button>
+        <button :class="{ ativa: abaAtiva === 'preview' }" @click="abaAtiva = 'preview'">Preview</button>
+      </nav>
+
+      <div class="conteudo-aba">
+        <div v-if="abaAtiva === 'sobre'" class="aba-sobre">
+          <p><strong>Categoria:</strong> {{ asset.categoria }}</p>
+          <p>{{ asset.descricao }}</p>
+          <div class="tags">
+            <span v-for="tag in asset.tags" :key="tag" class="tag">{{ tag }}</span>
+          </div>
+
+          <div v-if="asset.variacoes?.length" class="variacoes">
+            <h4>Variações</h4>
+            <details v-for="(v, i) in asset.variacoes" :key="i">
+              <summary>{{ v.nome }}</summary>
+              <pre class="codigo">{{ v.codigo }}</pre>
+            </details>
+          </div>
+        </div>
+
+        <div v-else-if="abaAtiva === 'codigo'" class="aba-codigo">
+          <pre class="codigo"><code>{{ asset.codigo }}</code></pre>
+        </div>
+
+        <div v-else class="aba-preview">
+          <PreviewFrame :tipo="asset.tipo" :preview-html="asset.previewHtml" :codigo="asset.codigo" />
+        </div>
+      </div>
+    </template>
+  </section>
+</template>
+
+<style scoped>
+.detalhe {
+  height: 100%;
+  overflow-y: auto;
+  padding: 16px;
+  background: #fbfbfc;
+}
+
+.vazio {
+  color: #888;
+}
+
+.cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.cabecalho h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.acoes {
+  display: flex;
+  gap: 8px;
+}
+
+.acoes button {
+  border: 1px solid #dcdfe4;
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.acoes .perigo {
+  border-color: #f2c2c2;
+  color: #c0392b;
+}
+
+.abas {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #e2e4e9;
+  margin-bottom: 16px;
+}
+
+.abas button {
+  background: transparent;
+  border: none;
+  padding: 8px 14px;
+  font-size: 14px;
+  color: #666;
+  border-bottom: 2px solid transparent;
+}
+
+.abas button.ativa {
+  color: #1f2430;
+  border-bottom-color: #3b4a6b;
+  font-weight: 600;
+}
+
+.tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.tag {
+  background: #e7ecff;
+  color: #33436e;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.variacoes {
+  margin-top: 16px;
+}
+
+.codigo {
+  background: #1f2430;
+  color: #e6e8ec;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.aba-preview {
+  height: 400px;
+}
+</style>
