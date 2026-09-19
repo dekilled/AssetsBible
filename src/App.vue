@@ -12,6 +12,7 @@ const tipos = [
   { valor: 'javascript', label: 'JavaScript' },
   { valor: 'vue', label: 'Vue Component' },
   { valor: 'html', label: 'HTML/CSS' },
+  { valor: 'server', label: 'Servidor (Node.js)' },
 ]
 
 const selectedTipo = ref('javascript')

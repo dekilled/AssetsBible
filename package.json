@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@webcontainer/api": "^1.6.4",
     "prismjs": "^1.30.0",
     "vue": "^3.4.21"
   },

@@ -47,6 +47,16 @@ function assetsApiPlugin() {
   }
 }
 
+// COOP/COEP são exigidos pelo navegador para SharedArrayBuffer, que o
+// WebContainers (runtime Node.js dentro do navegador, usado no preview de
+// assets do tipo "server") precisa para funcionar.
+const crossOriginIsolationHeaders = {
+  'Cross-Origin-Embedder-Policy': 'require-corp',
+  'Cross-Origin-Opener-Policy': 'same-origin',
+}
+
 export default defineConfig({
   plugins: [vue(), assetsApiPlugin()],
+  server: { headers: crossOriginIsolationHeaders },
+  preview: { headers: crossOriginIsolationHeaders },
 })

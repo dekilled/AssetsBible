@@ -15,6 +15,7 @@ const tiposDisponiveis = [
   { valor: 'javascript', label: 'JavaScript' },
   { valor: 'vue', label: 'Vue Component' },
   { valor: 'html', label: 'HTML/CSS' },
+  { valor: 'server', label: 'Servidor (Node.js)' },
 ]
 
 function criarFormularioVazio() {
@@ -60,8 +61,23 @@ defineExpose({ confirmarDescarteSeNecessario })
 const listaDataId = 'categorias-existentes'
 
 // HTML/JS/CSS ficam num único editor (linguagem 'markup' faz o Prism destacar
-// <script>/<style> embutidos); componentes Vue usam highlight de 'javascript' puro.
-const linguagemEditor = computed(() => (form.tipo === 'vue' ? 'javascript' : 'markup'))
+// <script>/<style> embutidos); componentes Vue e assets de servidor (código
+// Node.js puro, sem HTML) usam highlight de 'javascript' puro.
+const linguagemEditor = computed(() => (['vue', 'server'].includes(form.tipo) ? 'javascript' : 'markup'))
+
+const placeholderCodigo = computed(() => {
+  if (form.tipo === 'server') {
+    return [
+      'Código de um servidor Node.js — roda de verdade no preview via WebContainers.',
+      'Só módulos nativos (http, fs...) sobem na hora. Pra usar um pacote do npm',
+      '(ex: express), declare na 1ª linha: // deps: express',
+      '',
+      'const http = require("http");',
+      'http.createServer((req, res) => res.end("Olá!")).listen(3000);',
+    ].join('\n')
+  }
+  return 'HTML, CSS e JS juntos aqui (tudo o que o preview precisa pra rodar)'
+})
 
 function adicionarVariacao() {
   form.variacoes.push({ nome: '', codigo: '' })
@@ -147,7 +163,7 @@ function salvar() {
           <CodeEditor
             v-model="form.codigo"
             :language="linguagemEditor"
-            placeholder="HTML, CSS e JS juntos aqui (tudo o que o preview precisa pra rodar)"
+            :placeholder="placeholderCodigo"
           />
 
           <details class="variacoes">

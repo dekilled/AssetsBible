@@ -253,5 +253,38 @@
     ],
     "codigo": "<input id=\"nome\" type=\"text\" placeholder=\"Ex: relatorio.md\" style=\"font-family:sans-serif;padding:8px;width:100%;box-sizing:border-box;\" />\n<p id=\"out\" style=\"font-family:sans-serif;font-size:28px;\"></p>\n<script>\n  const fileIcons = { html: '🌐', htm: '🌐', css: '🎨', js: '⚡', mjs: '⚡', ts: '⚡', py: '🐍', json: '{ }', md: '📝', txt: '📄' };\n\n  function fileIcon(filename) {\n    const ext = (filename || '').split('.').pop().toLowerCase();\n    return fileIcons[ext] || '📄';\n  }\n\n  const input = document.getElementById('nome');\n  const out = document.getElementById('out');\n  function atualizar() {\n    out.textContent = fileIcon(input.value) + '  ' + (input.value || '(digite um nome)');\n  }\n  input.addEventListener('input', atualizar);\n  input.value = 'relatorio.md';\n  atualizar();\n</script>",
     "variacoes": []
+  },
+  {
+    "id": "a1b2c3d4-0011-4aaa-9000-webcontainer1",
+    "nome": "Servidor HTTP Básico (Node.js)",
+    "tipo": "server",
+    "categoria": "Servidor",
+    "descricao": "Servidor HTTP mínimo usando só o módulo nativo \"http\" do Node.js — roda de verdade no preview, dentro de um WebContainer (Node.js real executando no navegador, sem precisar de backend próprio). Como não declara dependências externas, sobe instantaneamente (sem passar por npm install).\n\nParâmetros: nenhum — é um script completo, não uma função. O servidor escuta na porta 3000; o WebContainer detecta a porta aberta automaticamente e expõe a URL real no preview, então a porta escolhida no código não precisa bater com nada de fora.\n\nRequisitos do preview: navegador baseado em Chromium (Chrome/Edge) com contexto seguro (HTTPS ou localhost) — mesma limitação do WebContainers em geral. Convenção de dependências: se precisar de um pacote do npm, declare na primeira linha como comentário \"// deps: nome-do-pacote\" (veja o asset \"Servidor com Express\" como exemplo).",
+    "tags": [
+      "servidor",
+      "http",
+      "node",
+      "webcontainer",
+      "backend"
+    ],
+    "codigo": "const http = require('http');\n\nconst server = http.createServer((req, res) => {\n  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });\n  res.end(`\n    <!doctype html>\n    <html>\n      <body style=\"font-family: sans-serif; padding: 24px;\">\n        <h1>🟢 Servidor Node.js rodando de verdade!</h1>\n        <p>Rota acessada: <code>${req.url}</code></p>\n        <p>Horário no servidor: ${new Date().toLocaleTimeString('pt-BR')}</p>\n      </body>\n    </html>\n  `);\n});\n\nserver.listen(3000, () => {\n  console.log('Servidor no ar em http://localhost:3000');\n});",
+    "variacoes": []
+  },
+  {
+    "id": "a1b2c3d4-0012-4aaa-9000-webcontainer2",
+    "nome": "Servidor com Express",
+    "tipo": "server",
+    "categoria": "Servidor",
+    "descricao": "Servidor Express.js com duas rotas (GET / e GET /api/hora), demonstrando a convenção de dependências do preview de assets do tipo \"server\": a primeira linha do código (\"// deps: express\") instrui o WebContainer a rodar \"npm install express\" antes de iniciar o servidor — por isso este exemplo demora alguns segundos a mais pra ficar pronto do que o \"Servidor HTTP Básico\" (que não tem dependências).\n\nParâmetros: nenhum — script completo. Para declarar mais de um pacote, separe por espaço, ex: \"// deps: express cors\".\n\nRotas do exemplo:\n- GET / → página HTML de boas-vindas.\n- GET /api/hora → JSON com a hora atual do servidor, pra provar que é uma API real respondendo, não um mock estático.",
+    "tags": [
+      "servidor",
+      "express",
+      "node",
+      "webcontainer",
+      "api",
+      "backend"
+    ],
+    "codigo": "// deps: express\nconst express = require('express');\nconst app = express();\n\napp.get('/', (req, res) => {\n  res.send(`\n    <!doctype html>\n    <html>\n      <body style=\"font-family: sans-serif; padding: 24px;\">\n        <h1>🚀 Express rodando dentro do preview</h1>\n        <p>Tente acessar <a href=\"/api/hora\">/api/hora</a> pra ver uma resposta JSON de verdade.</p>\n      </body>\n    </html>\n  `);\n});\n\napp.get('/api/hora', (req, res) => {\n  res.json({ hora: new Date().toISOString() });\n});\n\napp.listen(3000, () => {\n  console.log('Express no ar em http://localhost:3000');\n});",
+    "variacoes": []
   }
 ]

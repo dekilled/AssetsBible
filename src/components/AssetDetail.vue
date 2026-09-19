@@ -18,7 +18,7 @@ watch(
   }
 )
 
-const linguagem = computed(() => (props.asset?.tipo === 'vue' ? 'javascript' : 'markup'))
+const linguagem = computed(() => (['vue', 'server'].includes(props.asset?.tipo) ? 'javascript' : 'markup'))
 </script>
 
 <template>
