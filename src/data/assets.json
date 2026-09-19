@@ -95,5 +95,163 @@
     ],
     "codigo": "<div class=\"card\">\n  <h3>Título do Card</h3>\n  <p>Alguma descrição breve aqui.</p>\n</div>\n\n<style>\n.card {\n  font-family: sans-serif;\n  border: 1px solid #e2e2e2;\n  border-radius: 8px;\n  padding: 16px;\n  max-width: 280px;\n  transition: transform 0.2s ease, box-shadow 0.2s ease;\n}\n.card:hover {\n  transform: translateY(-4px);\n  box-shadow: 0 8px 20px rgba(0,0,0,0.12);\n}\n</style>",
     "variacoes": []
+  },
+  {
+    "id": "a1b2c3d4-0001-4aaa-9000-vibecodingh01",
+    "nome": "Gerador de UUID com Fallback",
+    "tipo": "javascript",
+    "categoria": "Utils",
+    "descricao": "Extraído de client/js/state.js (função makeId) do Vibe Coding Harness. Gera um identificador único (UUID v4) usando crypto.randomUUID() quando disponível. crypto.randomUUID só existe em \"contexto seguro\" (HTTPS, ou localhost/127.0.0.1) — se a página for acessada por HTTP puro (ex: deploy em nuvem sem TLS), a função cai automaticamente para uma geração manual via Math.random(), evitando um TypeError silencioso que travaria qualquer fluxo que precise gerar IDs.\n\nParâmetros: nenhum — a função não recebe argumentos.\n\nRetorno: string no formato \"xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx\" (UUID v4 válido em ambos os caminhos).\n\nUso sugerido: gerar IDs de itens de lista, chaves de localStorage, identificadores de sessão no cliente.",
+    "tags": [
+      "uuid",
+      "id",
+      "fallback",
+      "crypto",
+      "utils"
+    ],
+    "codigo": "<button id=\"gerar\" style=\"font-family:sans-serif;padding:8px 16px;\">Gerar novo ID</button>\n<ul id=\"lista\" style=\"font-family:monospace;font-size:13px;color:#333;padding-left:20px;\"></ul>\n<script>\n  function makeId() {\n    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {\n      return crypto.randomUUID();\n    }\n    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {\n      const r = (Math.random() * 16) | 0;\n      const v = c === 'x' ? r : (r & 0x3) | 0x8;\n      return v.toString(16);\n    });\n  }\n\n  const lista = document.getElementById('lista');\n  document.getElementById('gerar').addEventListener('click', () => {\n    const li = document.createElement('li');\n    li.textContent = makeId();\n    lista.prepend(li);\n  });\n  document.getElementById('gerar').click();\n</script>",
+    "variacoes": []
+  },
+  {
+    "id": "a1b2c3d4-0002-4aaa-9000-vibecodingh02",
+    "nome": "Estimador de Tokens e Nível de Esforço",
+    "tipo": "javascript",
+    "categoria": "IA / LLM",
+    "descricao": "Extraído de client/js/state.js (funções countTokens e effortLevel) do Vibe Coding Harness. Duas funções puras (sem efeitos colaterais, sem acesso ao DOM) usadas para estimar o custo de uma conversa antes de enviá-la a um modelo de IA.\n\ncountTokens(text): recebe uma string e retorna um número inteiro — estimativa aproximada de tokens, calculada como Math.ceil(tamanho_do_texto / 4) (heurística padrão de ~4 caracteres por token).\n\neffortLevel(tokens): recebe um número (quantidade de tokens, tipicamente o resultado de countTokens) e retorna um objeto { label, icon, level } classificando o \"esforço\": abaixo de 20000 tokens = Baixo (🟢, \"low\"); abaixo de 60000 = Médio (🟡, \"medium\"); 60000 ou mais = Alto (🔴, \"high\").\n\nUso sugerido: mostrar ao usuário, em tempo real, quantos tokens um texto vai consumir e sinalizar visualmente quando a conversa está ficando pesada.",
+    "tags": [
+      "tokens",
+      "llm",
+      "ia",
+      "estimativa",
+      "performance"
+    ],
+    "codigo": "<textarea id=\"texto\" rows=\"6\" style=\"font-family:sans-serif;width:100%;box-sizing:border-box;padding:8px;\" placeholder=\"Digite ou cole um texto...\"></textarea>\n<p id=\"out\" style=\"font-family:sans-serif;font-size:15px;\"></p>\n<script>\n  function countTokens(text) {\n    return Math.ceil((text || '').length / 4);\n  }\n  function effortLevel(tokens) {\n    if (tokens < 20000) return { label: 'Baixo', icon: '🟢', level: 'low' };\n    if (tokens < 60000) return { label: 'Médio', icon: '🟡', level: 'medium' };\n    return { label: 'Alto', icon: '🔴', level: 'high' };\n  }\n\n  const texto = document.getElementById('texto');\n  const out = document.getElementById('out');\n  function atualizar() {\n    const tokens = countTokens(texto.value);\n    const nivel = effortLevel(tokens);\n    out.textContent = `${nivel.icon} ~${tokens} tokens — Esforço: ${nivel.label}`;\n  }\n  texto.addEventListener('input', atualizar);\n  texto.value = 'Cole aqui um texto grande para ver a estimativa de tokens mudar em tempo real.';\n  atualizar();\n</script>",
+    "variacoes": []
+  },
+  {
+    "id": "a1b2c3d4-0003-4aaa-9000-vibecodingh03",
+    "nome": "Limite de Contexto por Modelo de IA",
+    "tipo": "javascript",
+    "categoria": "IA / LLM",
+    "descricao": "Extraído de client/js/state.js (função modelContextLimit + tabela MODEL_CONTEXT_LIMITS) do Vibe Coding Harness. Descobre a janela de contexto (em tokens) de um modelo de IA a partir do seu nome, usando uma tabela de substrings conhecidas (gpt-4, claude, gemini, llama, mistral, deepseek, qwen etc).\n\nParâmetros:\n- modelId (string): nome/id do modelo, ex: \"gpt-4o-mini\" ou \"claude-3-5-sonnet\". A busca é case-insensitive e por substring — a ORDEM da tabela importa, pois o primeiro nome que \"casar\" vence (por isso nomes específicos como \"gemma-4\" vêm antes de genéricos).\n- config (objeto opcional): se config.contextLimit for um número finito maior que 0, ele tem prioridade sobre a tabela (permite que o usuário sobrescreva manualmente, ex. para infraestrutura própria).\n\nRetorno: number — limite de contexto em tokens. Se nenhuma substring bater e não houver override, retorna o padrão DEFAULT_CONTEXT_LIMIT (128000).\n\nUso sugerido: ajustar a barra de progresso de \"uso de contexto\" de um chat de acordo com o modelo selecionado.",
+    "tags": [
+      "llm",
+      "contexto",
+      "tokens",
+      "modelos",
+      "ia"
+    ],
+    "codigo": "<input id=\"modelo\" type=\"text\" placeholder=\"Ex: gpt-4o, claude-3-5-sonnet, llama-3.1\" style=\"font-family:sans-serif;padding:8px;width:100%;box-sizing:border-box;\" />\n<input id=\"override\" type=\"number\" placeholder=\"Override manual (opcional, em tokens)\" style=\"font-family:sans-serif;padding:8px;width:100%;box-sizing:border-box;margin-top:6px;\" />\n<p id=\"out\" style=\"font-family:sans-serif;font-size:16px;font-weight:bold;\"></p>\n<script>\n  const DEFAULT_CONTEXT_LIMIT = 128000;\n  const MODEL_CONTEXT_LIMITS = [\n    ['gemma-4', 256000], ['gemma4', 256000], ['gemma-3', 128000], ['gemma3', 128000],\n    ['llama-4', 256000], ['llama4', 256000], ['llama-3.3', 128000], ['llama3.3', 128000],\n    ['llama-3.1', 128000], ['llama3.1', 128000], ['llama-3', 8000], ['llama3', 8000],\n    ['qwen3', 256000], ['qwen2.5', 128000], ['deepseek-v3', 128000], ['deepseek-r1', 128000],\n    ['mistral-large', 128000], ['mixtral', 32000], ['mistral', 32000], ['phi-4', 16000],\n    ['command-r-plus', 128000], ['command-r', 128000],\n    ['claude-haiku-4', 200000], ['claude-opus-4', 200000], ['claude-sonnet-4', 200000],\n    ['claude-3-5', 200000], ['claude-3', 200000], ['claude', 200000],\n    ['gpt-4.1', 1000000], ['gpt-4o', 128000], ['gpt-4-turbo', 128000], ['gpt-4', 8000],\n    ['gpt-3.5-turbo-16k', 16000], ['gpt-3', 16000],\n    ['o4-mini', 200000], ['o3', 200000], ['o1', 200000],\n    ['gemini-2', 1000000], ['gemini-1.5', 1000000],\n  ];\n\n  function modelContextLimit(modelId, config) {\n    const override = Number(config?.contextLimit);\n    if (Number.isFinite(override) && override > 0) return override;\n    const m = (modelId || '').toLowerCase();\n    for (const [needle, limit] of MODEL_CONTEXT_LIMITS) {\n      if (m.includes(needle)) return limit;\n    }\n    return DEFAULT_CONTEXT_LIMIT;\n  }\n\n  const modeloInput = document.getElementById('modelo');\n  const overrideInput = document.getElementById('override');\n  const out = document.getElementById('out');\n  function atualizar() {\n    const limite = modelContextLimit(modeloInput.value, { contextLimit: overrideInput.value });\n    out.textContent = 'Limite de contexto: ' + limite.toLocaleString('pt-BR') + ' tokens';\n  }\n  modeloInput.addEventListener('input', atualizar);\n  overrideInput.addEventListener('input', atualizar);\n  modeloInput.value = 'claude-3-5-sonnet';\n  atualizar();\n</script>",
+    "variacoes": []
+  },
+  {
+    "id": "a1b2c3d4-0004-4aaa-9000-vibecodingh04",
+    "nome": "Hex para RGBA",
+    "tipo": "javascript",
+    "categoria": "Cores / UI",
+    "descricao": "Extraído de client/js/profiles.js (função hexToRgba), usado no harness para dar um \"glow\" neon com transparência ao avatar de um perfil a partir de uma cor arbitrária escolhida em um <input type=\"color\"> — algo que CSS puro não resolve porque não deriva alpha de uma cor hex dinâmica.\n\nParâmetros:\n- hex (string): cor no formato \"#RRGGBB\" (ou \"RRGGBB\" sem #). Se omitido/vazio, usa o padrão \"#7C3AED\" (roxo).\n- alpha (number): opacidade de 0 a 1 a ser aplicada na cor de saída.\n\nRetorno: string no formato \"rgba(r,g,b,alpha)\", pronta para usar em qualquer propriedade CSS de cor (background, box-shadow, border etc).\n\nUso sugerido: gerar variações translúcidas de uma cor definida pelo usuário, para glows, overlays e sombras coloridas.",
+    "tags": [
+      "cor",
+      "hex",
+      "rgba",
+      "conversao",
+      "css"
+    ],
+    "codigo": "<input id=\"cor\" type=\"color\" value=\"#7C3AED\" style=\"width:60px;height:40px;\" />\n<input id=\"alpha\" type=\"range\" min=\"0\" max=\"1\" step=\"0.05\" value=\"0.35\" style=\"width:200px;vertical-align:middle;\" />\n<span id=\"alphaLabel\" style=\"font-family:sans-serif;\"></span>\n<div id=\"caixa\" style=\"margin-top:12px;width:220px;height:80px;border-radius:10px;background:#1a1a1a;display:flex;align-items:center;justify-content:center;color:#fff;font-family:sans-serif;\"></div>\n<p id=\"out\" style=\"font-family:monospace;font-size:13px;\"></p>\n<script>\n  function hexToRgba(hex, alpha) {\n    const n = parseInt(String(hex || '7C3AED').replace('#', ''), 16);\n    return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;\n  }\n\n  const corInput = document.getElementById('cor');\n  const alphaInput = document.getElementById('alpha');\n  const alphaLabel = document.getElementById('alphaLabel');\n  const caixa = document.getElementById('caixa');\n  const out = document.getElementById('out');\n\n  function atualizar() {\n    const rgba = hexToRgba(corInput.value, Number(alphaInput.value));\n    alphaLabel.textContent = 'alpha: ' + alphaInput.value;\n    caixa.style.boxShadow = '0 0 40px 10px ' + rgba;\n    caixa.style.border = '2px solid ' + corInput.value;\n    caixa.textContent = rgba;\n    out.textContent = rgba;\n  }\n  corInput.addEventListener('input', atualizar);\n  alphaInput.addEventListener('input', atualizar);\n  atualizar();\n</script>",
+    "variacoes": []
+  },
+  {
+    "id": "a1b2c3d4-0005-4aaa-9000-vibecodingh05",
+    "nome": "Slugify",
+    "tipo": "javascript",
+    "categoria": "Strings",
+    "descricao": "Extraído de client/js/profiles.js (função slugify), usado no harness para transformar o título de uma skill digitado pelo usuário num identificador seguro para nome de arquivo/URL.\n\nParâmetros:\n- value (string): texto de entrada, em qualquer idioma/acentuação (ex: \"Análise de Código\").\n\nRetorno: string — versão \"slug\" do texto: acentos removidos (via normalização NFD + remoção de diacríticos), tudo em minúsculas, qualquer sequência de caracteres que não seja a-z ou 0-9 vira um único hífen, e hífens nas pontas são removidos.\n\nExemplo: \"Análise de Código!!\" → \"analise-de-codigo\".\n\nUso sugerido: gerar slugs para URLs, nomes de arquivo, ids de skills/categorias a partir de texto digitado pelo usuário.",
+    "tags": [
+      "slug",
+      "texto",
+      "normalizacao",
+      "url",
+      "strings"
+    ],
+    "codigo": "<input id=\"i\" type=\"text\" placeholder=\"Digite um título, ex: Análise de Código!\" style=\"font-family:sans-serif;padding:8px;width:100%;box-sizing:border-box;\" />\n<p id=\"out\" style=\"font-family:monospace;background:#f4f4f4;padding:10px;border-radius:6px;\"></p>\n<script>\n  function slugify(value) {\n    return value\n      .normalize('NFD')\n      .replace(/[\\u0300-\\u036f]/g, '')\n      .toLowerCase()\n      .replace(/[^a-z0-9]+/g, '-')\n      .replace(/^-+|-+$/g, '');\n  }\n\n  const input = document.getElementById('i');\n  const out = document.getElementById('out');\n  function atualizar() {\n    out.textContent = slugify(input.value) || '(vazio)';\n  }\n  input.addEventListener('input', atualizar);\n  input.value = 'Análise de Código!!';\n  atualizar();\n</script>",
+    "variacoes": []
+  },
+  {
+    "id": "a1b2c3d4-0006-4aaa-9000-vibecodingh06",
+    "nome": "Editor de Chips/Tags",
+    "tipo": "javascript",
+    "categoria": "Componentes UI",
+    "descricao": "Extraído de client/js/profiles.js (função createChipEditor). O próprio código-fonte do harness marca esse trecho como \"componente genérico, sem precedente no projeto — reaproveitado pelas duas listas em vez de duplicar a lógica de add/remove\" (usado lá para editar \"ocupações\" e \"tags de personalidade\" de um perfil).\n\nParâmetros:\n- listEl (HTMLElement): elemento container onde os chips (tags) serão renderizados.\n- inputEl (HTMLInputElement): campo de texto onde o usuário digita um novo item e aperta Enter para adicioná-lo.\n- initialItems (string[], opcional): lista inicial de itens já presentes (padrão: array vazio).\n\nRetorno: objeto { getItems(), setItems(next) } — getItems() retorna a lista atual de strings; setItems(next) substitui a lista inteira e re-renderiza.\n\nComportamento: ao apertar Enter no input, o valor (trim) é adicionado como novo chip, IGNORANDO duplicatas (comparação case-insensitive); cada chip tem um botão \"×\" que o remove da lista.\n\nUso sugerido: campos de tags, categorias, palavras-chave, destinatários — qualquer lista curta editável pelo usuário.",
+    "tags": [
+      "chips",
+      "tags",
+      "input",
+      "componente",
+      "ui"
+    ],
+    "codigo": "<label style=\"font-family:sans-serif;font-size:13px;color:#555;\">Ocupações (digite e aperte Enter)</label>\n<input id=\"chip-input\" type=\"text\" placeholder=\"Ex: Designer\" style=\"font-family:sans-serif;padding:8px;width:100%;box-sizing:border-box;margin:6px 0;\" />\n<div id=\"chip-list\" style=\"display:flex;flex-wrap:wrap;gap:6px;\"></div>\n<style>\n  .chip-item { background:#e7ecff; color:#33436e; font-size:13px; padding:4px 6px 4px 10px; border-radius:999px; display:inline-flex; align-items:center; gap:6px; font-family:sans-serif; }\n  .chip-remove { border:none; background:transparent; cursor:pointer; color:#33436e; font-size:14px; line-height:1; padding:0; }\n</style>\n<script>\n  function createChipEditor(listEl, inputEl, initialItems = []) {\n    let items = [...initialItems];\n    function render() {\n      listEl.replaceChildren();\n      items.forEach((text, i) => {\n        const chip = document.createElement('span');\n        chip.className = 'chip-item';\n        chip.append(document.createTextNode(text));\n        const remove = document.createElement('button');\n        remove.type = 'button';\n        remove.className = 'chip-remove';\n        remove.setAttribute('aria-label', `Remover ${text}`);\n        remove.textContent = '×';\n        remove.addEventListener('click', () => { items.splice(i, 1); render(); });\n        chip.append(remove);\n        listEl.append(chip);\n      });\n    }\n    inputEl.addEventListener('keydown', (event) => {\n      if (event.key !== 'Enter') return;\n      event.preventDefault();\n      const value = inputEl.value.trim();\n      if (value && !items.some((item) => item.toLowerCase() === value.toLowerCase())) {\n        items.push(value);\n        render();\n      }\n      inputEl.value = '';\n    });\n    render();\n    return { getItems: () => items, setItems: (next) => { items = [...(next || [])]; render(); } };\n  }\n\n  createChipEditor(\n    document.getElementById('chip-list'),\n    document.getElementById('chip-input'),\n    ['Designer', 'Frontend']\n  );\n</script>",
+    "variacoes": []
+  },
+  {
+    "id": "a1b2c3d4-0007-4aaa-9000-vibecodingh07",
+    "nome": "Lightbox de Imagem",
+    "tipo": "javascript",
+    "categoria": "Componentes UI",
+    "descricao": "Adaptado de client/js/ui.js (função openLightbox) do Vibe Coding Harness. Abre uma imagem em overlay de tela cheia, com fechamento por clique no fundo, clique no botão \"×\" ou tecla ESC. Esta é a versão simplificada do componente: no harness original, a função também aceita attachmentPath + onDeleted/onMoved para mostrar botões de \"Apagar\" e \"Mover pro workspace\" quando a imagem é um anexo real salvo no servidor — removido aqui por depender de uma API backend, mas o padrão central do overlay é o mesmo.\n\nParâmetros:\n- src (string, obrigatório): URL ou caminho da imagem a exibir em tela cheia.\n- options (objeto, opcional): { imgEl } — elemento <img> de origem que disparou o lightbox (usado no original para manipular o DOM após ações; não obrigatório para só visualizar).\n\nRetorno: nenhum (função de efeito colateral — insere e remove elementos do DOM).\n\nUso sugerido: galerias de imagem, anexos de chat, thumbnails clicáveis.",
+    "tags": [
+      "modal",
+      "imagem",
+      "lightbox",
+      "overlay",
+      "ui"
+    ],
+    "codigo": "<img id=\"thumb\" src=\"https://picsum.photos/seed/orion/300/180\" style=\"cursor:pointer;border-radius:8px;\" alt=\"Clique para ampliar\" />\n<p style=\"font-family:sans-serif;color:#888;font-size:13px;\">Clique na imagem para abrir em tela cheia (ESC ou clique fora para fechar)</p>\n<script>\n  function openLightbox(src) {\n    const overlay = document.createElement('div');\n    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:9999;';\n    const close = () => {\n      overlay.remove();\n      document.removeEventListener('keydown', escHandler);\n    };\n    const escHandler = (e) => { if (e.key === 'Escape') close(); };\n    const img = document.createElement('img');\n    img.src = src;\n    img.style.cssText = 'max-width:90vw;max-height:90vh;border-radius:6px;';\n    img.addEventListener('click', (e) => e.stopPropagation());\n    const closeBtn = document.createElement('button');\n    closeBtn.type = 'button';\n    closeBtn.textContent = '×';\n    closeBtn.setAttribute('aria-label', 'Fechar');\n    closeBtn.style.cssText = 'position:absolute;top:16px;right:24px;font-size:32px;background:transparent;border:none;color:#fff;cursor:pointer;';\n    closeBtn.addEventListener('click', close);\n    overlay.addEventListener('click', close);\n    overlay.append(img, closeBtn);\n    document.body.append(overlay);\n    document.addEventListener('keydown', escHandler);\n  }\n\n  document.getElementById('thumb').addEventListener('click', (e) => openLightbox(e.target.src));\n</script>",
+    "variacoes": []
+  },
+  {
+    "id": "a1b2c3d4-0008-4aaa-9000-vibecodingh08",
+    "nome": "Diálogo de Confirmação Customizado",
+    "tipo": "javascript",
+    "categoria": "Componentes UI",
+    "descricao": "Extraído de client/js/ui.js (função showConfirm). Substitui o window.confirm() nativo do navegador por um modal customizável usando o elemento <dialog> HTML, mantendo consistência visual com o resto da interface (no harness original, dark theme).\n\nParâmetros:\n- message (string, obrigatório): texto exibido no corpo do diálogo.\n- onConfirm (function, obrigatório): callback chamado SOMENTE se o usuário clicar em \"Confirmar\" (nunca é chamado em caso de cancelamento).\n- options (objeto, opcional):\n  - danger (boolean, padrão true): quando true usa ícone 🗑️ e botão vermelho, indicado para ações destrutivas (apagar, remover); quando false usa ícone ⚠️ e botão verde, indicado para ações neutras (mover, salvar).\n  - icon (string, opcional): sobrescreve o ícone automático definido por \"danger\".\n\nRetorno: nenhum (a função abre o modal via dialog.showModal() e reage assincronamente ao clique do usuário).\n\nUso sugerido: qualquer confirmação de ação (excluir item, sobrescrever arquivo, sair sem salvar) que precise de estilo consistente com o app, em vez do confirm() feio e não estilizável do navegador.",
+    "tags": [
+      "dialog",
+      "confirmacao",
+      "modal",
+      "ui"
+    ],
+    "codigo": "<button id=\"btn-apagar\" style=\"font-family:sans-serif;padding:8px 16px;background:#c0392b;color:#fff;border:none;border-radius:6px;margin-right:8px;\">🗑️ Apagar item (danger)</button>\n<button id=\"btn-mover\" style=\"font-family:sans-serif;padding:8px 16px;background:#27ae60;color:#fff;border:none;border-radius:6px;\">📁 Mover item (neutro)</button>\n<p id=\"out\" style=\"font-family:sans-serif;color:#555;\"></p>\n\n<dialog id=\"confirm-dialog\" style=\"border:none;border-radius:10px;padding:0;max-width:320px;\">\n  <div style=\"padding:20px;font-family:sans-serif;text-align:center;\">\n    <div id=\"confirm-icon\" style=\"font-size:32px;\"></div>\n    <p id=\"confirm-message\" style=\"margin:12px 0 20px;color:#333;\"></p>\n    <div style=\"display:flex;gap:8px;justify-content:center;\">\n      <button id=\"confirm-cancel\" style=\"padding:8px 16px;border:1px solid #ccc;border-radius:6px;background:#fff;\">Cancelar</button>\n      <button id=\"confirm-accept\" style=\"padding:8px 16px;border:none;border-radius:6px;color:#fff;\">Confirmar</button>\n    </div>\n  </div>\n</dialog>\n\n<script>\n  function showConfirm(message, onConfirm, { danger = true, icon } = {}) {\n    const dialog = document.getElementById('confirm-dialog');\n    if (dialog.open) dialog.close();\n\n    document.getElementById('confirm-message').textContent = message;\n    document.getElementById('confirm-icon').textContent = icon || (danger ? '🗑️' : '⚠️');\n    const acceptBtn = document.getElementById('confirm-accept');\n    const cancelBtn = document.getElementById('confirm-cancel');\n    acceptBtn.style.background = danger ? '#c0392b' : '#27ae60';\n\n    let confirmed = false;\n    const onAccept = () => { confirmed = true; dialog.close(); };\n    const onCancel = () => dialog.close();\n    const onClose = () => {\n      acceptBtn.removeEventListener('click', onAccept);\n      cancelBtn.removeEventListener('click', onCancel);\n      dialog.removeEventListener('close', onClose);\n      if (confirmed) onConfirm();\n    };\n\n    acceptBtn.addEventListener('click', onAccept);\n    cancelBtn.addEventListener('click', onCancel);\n    dialog.addEventListener('close', onClose);\n    dialog.showModal();\n  }\n\n  const out = document.getElementById('out');\n  document.getElementById('btn-apagar').addEventListener('click', () => {\n    showConfirm('Apagar este item? Essa ação não pode ser desfeita.', () => {\n      out.textContent = 'Item apagado ✅';\n    }, { danger: true });\n  });\n  document.getElementById('btn-mover').addEventListener('click', () => {\n    showConfirm('Mover este item para outra pasta?', () => {\n      out.textContent = 'Item movido ✅';\n    }, { danger: false });\n  });\n</script>",
+    "variacoes": []
+  },
+  {
+    "id": "a1b2c3d4-0009-4aaa-9000-vibecodingh09",
+    "nome": "Textarea com Auto-Resize",
+    "tipo": "javascript",
+    "categoria": "UI / Formulários",
+    "descricao": "Baseado em client/js/ui.js (função resize), usado no harness no campo de prompt do chat: a altura do <textarea> cresce automaticamente conforme o usuário digita, até um limite máximo, evitando barra de rolagem interna em textos curtos.\n\nParâmetros (versão generalizada do padrão original):\n- textareaEl (HTMLTextAreaElement): o elemento a ser redimensionado.\n- maxHeight (number, opcional, padrão 140): altura máxima em pixels antes de a barra de rolagem interna aparecer (no harness original esse valor era fixo em 140px).\n\nRetorno: nenhum (efeito colateral — ajusta textareaEl.style.height).\n\nMecânica: zera a altura (\"auto\") para o navegador recalcular o scrollHeight real do conteúdo, depois aplica min(scrollHeight, maxHeight) como nova altura — truque necessário porque scrollHeight não encolhe sozinho quando texto é apagado.\n\nUso sugerido: campos de prompt de chat, comentários, qualquer textarea que deva se ajustar ao conteúdo sem crescer indefinidamente.",
+    "tags": [
+      "textarea",
+      "auto-resize",
+      "formulario",
+      "ui"
+    ],
+    "codigo": "<textarea id=\"prompt\" rows=\"1\" placeholder=\"Digite algo e veja a altura crescer...\" style=\"font-family:sans-serif;width:100%;box-sizing:border-box;padding:8px;resize:none;overflow-y:auto;max-height:140px;\"></textarea>\n<script>\n  function autoResize(textareaEl, maxHeight = 140) {\n    textareaEl.style.height = 'auto';\n    textareaEl.style.height = Math.min(textareaEl.scrollHeight, maxHeight) + 'px';\n  }\n\n  const prompt = document.getElementById('prompt');\n  prompt.addEventListener('input', () => autoResize(prompt));\n  autoResize(prompt);\n</script>",
+    "variacoes": []
+  },
+  {
+    "id": "a1b2c3d4-0010-4aaa-9000-vibecodingh10",
+    "nome": "Ícone por Extensão de Arquivo",
+    "tipo": "javascript",
+    "categoria": "Utils",
+    "descricao": "Extraído de client/js/state.js (mapa fileIcons), usado no explorador de arquivos do workspace do harness para mostrar um emoji representando o tipo de cada arquivo na árvore.\n\nParâmetros:\n- filename (string): nome do arquivo, ex: \"index.html\" ou \"app.py\" (a função criada aqui extrai a extensão automaticamente).\n\nRetorno: string — um emoji correspondente à extensão (html/htm: 🌐, css: 🎨, js/mjs/ts: ⚡, py: 🐍, json: { }, md: 📝, txt: 📄); se a extensão não for reconhecida, retorna um ícone genérico de arquivo (📄).\n\nUso sugerido: exploradores de arquivo, listas de upload, abas de editor — qualquer lugar que precise de um indicador visual rápido do tipo de arquivo sem precisar de uma biblioteca de ícones.",
+    "tags": [
+      "arquivos",
+      "icones",
+      "emoji",
+      "mapa",
+      "utils"
+    ],
+    "codigo": "<input id=\"nome\" type=\"text\" placeholder=\"Ex: relatorio.md\" style=\"font-family:sans-serif;padding:8px;width:100%;box-sizing:border-box;\" />\n<p id=\"out\" style=\"font-family:sans-serif;font-size:28px;\"></p>\n<script>\n  const fileIcons = { html: '🌐', htm: '🌐', css: '🎨', js: '⚡', mjs: '⚡', ts: '⚡', py: '🐍', json: '{ }', md: '📝', txt: '📄' };\n\n  function fileIcon(filename) {\n    const ext = (filename || '').split('.').pop().toLowerCase();\n    return fileIcons[ext] || '📄';\n  }\n\n  const input = document.getElementById('nome');\n  const out = document.getElementById('out');\n  function atualizar() {\n    out.textContent = fileIcon(input.value) + '  ' + (input.value || '(digite um nome)');\n  }\n  input.addEventListener('input', atualizar);\n  input.value = 'relatorio.md';\n  atualizar();\n</script>",
+    "variacoes": []
   }
 ]
